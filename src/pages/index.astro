@@ -9,15 +9,20 @@ const artists = (await getCollection('artists'))
   .sort((a, b) => a.data.order - b.data.order || a.data.name.localeCompare(b.data.name));
 
 /*
- * `featured` drives the plate at the top of the roster. Every featured artist
- * gets a turn there, cycling automatically; the rest fill the grid beneath.
- * If nothing is marked featured the first artist by order leads alone, so the
- * page always opens on a photograph rather than on a paragraph.
+ * `featured` drives the plate at the top of the roster: every featured artist
+ * gets a turn there, cycling automatically. If nothing is marked featured the
+ * first artist by order leads alone, so the page always opens on a photograph
+ * rather than on a paragraph.
  */
 const featured = artists.filter((artist) => artist.data.featured);
 const lead = featured.length > 0 ? featured : artists.slice(0, 1);
-const leadIds = new Set(lead.map((artist) => artist.id));
-const rest = artists.filter((artist) => !leadIds.has(artist.id));
+
+/*
+ * The grid below shows the whole roster, featured artists included. A promoter
+ * checking who is on the books should be able to see everyone at once rather
+ * than waiting for the plate to cycle round.
+ */
+const roster = artists;
 ---
 
 <BaseLayout
@@ -29,31 +34,27 @@ const rest = artists.filter((artist) => !leadIds.has(artist.id));
     <h1 class="masthead__title">A future-forward management agency in Amsterdam.</h1>
   </section>
 
-  <section class="roster" aria-labelledby="roster-heading">
-    <h2 id="roster-heading" class="visually-hidden">Roster</h2>
+  {
+    lead.length > 0 && (
+      <div class="page roster__lead">
+        <FeaturedCarousel artists={lead} />
+      </div>
+    )
+  }
 
-    {
-      lead.length > 0 && (
-        <div class="page roster__lead">
-          <FeaturedCarousel artists={lead} />
+  {
+    roster.length > 0 && (
+      <section class="page roster__rest" aria-labelledby="roster-heading">
+        <hr class="rule" data-reveal />
+        <h2 id="roster-heading" class="label roster__label">Roster</h2>
+        <div class="roster__grid" data-reveal-group>
+          {roster.map((artist) => (
+            <ArtistCard artist={artist} />
+          ))}
         </div>
-      )
-    }
-
-    {
-      rest.length > 0 && (
-        <div class="page roster__rest">
-          <hr class="rule" data-reveal />
-          <p class="label roster__label">Also on the roster</p>
-          <div class="roster__grid" data-reveal-group>
-            {rest.map((artist, index) => (
-              <ArtistCard artist={artist} eager={index < 2} />
-            ))}
-          </div>
-        </div>
-      )
-    }
-  </section>
+      </section>
+    )
+  }
 </BaseLayout>
 
 <style>

@@ -180,6 +180,15 @@ const sizes = isLead
   }
 
   /*
+   * On the lead plate the carousel's Pause control occupies the top-right
+   * corner, so the status marker drops below it rather than overlapping.
+   */
+  .card--lead .card__status {
+    margin-block-start: calc(var(--space-md) + 2.5rem);
+    margin-inline-end: var(--space-lg);
+  }
+
+  /*
    * The information box. It stretches over the whole image rather than taking
    * a percentage height: a percentage resolved against an aspect-ratio track
    * overflowed the media and `overflow: hidden` silently clipped the manager
