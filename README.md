@@ -51,6 +51,7 @@ npm run dev          # http://127.0.0.1:4321
 Other commands:
 
 ```bash
+npm run check           # typecheck .astro and .ts files
 npm run build           # production build into dist/
 npm run preview         # preview the static build (Astro's own server)
 npm run preview:worker  # build, then serve through the real Worker runtime
@@ -86,8 +87,12 @@ These need doing in dashboards and cannot be scripted from here:
 3. **Point the domain.** Add `elsewisemgmt.com` as a zone in Cloudflare, then
    add it as a custom domain on the Worker. Until then the site is on
    `elsewise.cedric-c3e.workers.dev`.
-4. **Create the R2 bucket** `elsewise-files` and map it to
-   `files.elsewisemgmt.com`, which is the base URL heavy assets resolve against.
+4. **Enable R2, then create the bucket.** R2 is not yet enabled on the
+   account — `wrangler r2 bucket create` returns code 10042 until it is
+   switched on in the dashboard. Then create `elsewise-files` and map it to
+   `files.elsewisemgmt.com`, which is the base URL heavy assets resolve
+   against. Nothing on the site breaks meanwhile; only the hi-res and
+   production-document links 404.
 
 ---
 

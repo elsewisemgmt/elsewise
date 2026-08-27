@@ -11,7 +11,8 @@
     "preview": "astro preview",
     "preview:worker": "astro build && wrangler dev",
     "deploy": "astro build && wrangler deploy",
-    "astro": "astro"
+    "astro": "astro",
+    "check": "astro check"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.2.5",
@@ -23,14 +24,17 @@
     "astro": "^7.2.8",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "sharp": "^0.35.4"
+    "sharp": "^0.35.4",
+    "zod": "^4.4.3"
   },
   "allowScripts": {
     "esbuild": true
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.10",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
+    "typescript": "^6.0.3",
     "wrangler": "^4.127.0"
   }
 }

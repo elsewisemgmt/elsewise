@@ -1,5 +1,7 @@
-import { defineCollection, reference, z } from 'astro:content';
+import { defineCollection, reference } from 'astro:content';
 import { glob } from 'astro/loaders';
+// Astro 7 deprecates re-exporting zod from astro:content; import it directly.
+import { z } from 'zod';
 
 /**
  * Keystatic writes `null` or `""` for optional fields the editor left blank,
