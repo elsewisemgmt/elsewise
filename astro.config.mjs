@@ -31,4 +31,30 @@ export default defineConfig({
   // Astro sessions. Nothing here uses them — the only on-demand routes are
   // Keystatic's, which carry their own auth — so the binding is pure overhead.
   session: false,
+
+  vite: {
+    optimizeDeps: {
+      // Keystatic's API handler depends on `cookie` (pure CJS, no exports map)
+      // and `superstruct` (CJS main). The dev server loaded them raw into its
+      // workerd runner, which is ESM-only, so /api/keystatic/* died with
+      // "exports is not defined" — the GitHub OAuth handshake, i.e. the whole
+      // of GitHub mode, was unusable locally.
+      //
+      // Prebundling converts them to ESM up front. The Cloudflare adapter
+      // merges this list into its own allowlist for the server environments.
+      // Production was never affected: Rolldown wraps CJS correctly at build.
+      // Keystatic's own entrypoints are listed too. Left to be discovered
+      // mid-request they trigger "optimized dependencies changed. reloading",
+      // and the workerd runner does not survive that reload — the dev server
+      // exits before becoming ready. It only bites on a cold cache, so it
+      // looks intermittent: the first `npm run dev` after an install fails and
+      // the next one works. Prebundling them at startup avoids the reload.
+      include: [
+        'cookie',
+        'superstruct',
+        '@keystatic/astro/internal/keystatic-api.js',
+        '@keystatic/core/api/generic',
+      ],
+    },
+  },
 });

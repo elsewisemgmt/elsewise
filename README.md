@@ -195,6 +195,32 @@ settings, not as a secret.
 
 ---
 
+## Troubleshooting
+
+**`npm run dev` says "Dev server process exited before becoming ready"**
+
+Should no longer happen. It was a Vite dep-optimizer race: Keystatic's API
+entrypoint was discovered mid-request, Vite reoptimized and reloaded, and the
+workerd dev runner did not survive the reload. It only appeared on a cold
+cache, so it looked intermittent — the first run after an install failed and
+the next succeeded. Fixed by prebundling those entrypoints in
+`vite.optimizeDeps.include`. If something like it returns, `rm -rf
+node_modules/.vite` and start again.
+
+**`/api/keystatic/*` returns 500**
+
+Expected until the GitHub App exists — the handler has no client ID or secret
+to work with. Once the four variables are set it returns a 307 redirect to
+GitHub. If it 500s *with* credentials set, check them for typos first.
+
+Astro 7 runs the dev server as a background daemon:
+
+```bash
+npx astro dev status
+npx astro dev logs     # the error you actually want is usually here
+npx astro dev stop
+```
+
 ## Project structure
 
 ```
