@@ -5,6 +5,19 @@ import react from '@astrojs/react';
 import markdoc from '@astrojs/markdoc';
 import keystatic from '@keystatic/astro';
 
+/*
+ * Keystatic's "create the GitHub App for me" flow converts a GitHub
+ * app-manifest and then writes the resulting credentials into .env on disk.
+ * That needs fs, so Keystatic only ships it in its Node build — under the
+ * Cloudflare adapter the API route runs in workerd and refuses with
+ * "…non-Node.js environment which does not support GitHub App creation".
+ *
+ * `npm run setup:github-app` sets this flag to drop the adapter for one dev
+ * session, so the route resolves Keystatic's Node build and the flow works.
+ * Use it only for that setup step — it is not how the site runs or deploys.
+ */
+const isGitHubAppSetup = process.env.KEYSTATIC_SETUP === '1';
+
 // https://astro.build/config
 export default defineConfig({
   site: 'https://elsewisemgmt.com',
@@ -16,14 +29,20 @@ export default defineConfig({
   //   /keystatic/[...params]      the admin UI (React, admin-only)
   //   /api/keystatic/[...params]  the GitHub App OAuth + commit API
   // No public page ships React or hits the Worker.
-  adapter: cloudflare({
-    // 'compile' optimises images at build time with sharp and passes through
-    // at runtime. Correct here because every image-bearing page is prerendered,
-    // so no runtime image service (and no Images binding) is needed.
-    imageService: 'compile',
-    // Prerender in Node rather than workerd so sharp is available during build.
-    prerenderEnvironment: 'node',
-  }),
+  ...(isGitHubAppSetup
+    ? {}
+    : {
+        adapter: cloudflare({
+          // 'compile' optimises images at build time with sharp and passes
+          // through at runtime. Correct here because every image-bearing page
+          // is prerendered, so no runtime image service (and no Images
+          // binding) is needed.
+          imageService: 'compile',
+          // Prerender in Node rather than workerd so sharp is available
+          // during build.
+          prerenderEnvironment: 'node',
+        }),
+      }),
 
   integrations: [react(), markdoc(), keystatic()],
 

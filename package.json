@@ -7,6 +7,7 @@
   },
   "scripts": {
     "dev": "astro dev",
+    "setup:github-app": "KEYSTATIC_SETUP=1 astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "preview:worker": "astro build && wrangler dev",
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@types/node": "^26.4.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
     "typescript": "^6.0.3",

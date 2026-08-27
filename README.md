@@ -172,16 +172,57 @@ already.
 
 ## Keystatic GitHub App
 
-Not yet created. Keystatic generates it for you:
+Keystatic can create the App for you, but that flow converts a GitHub
+app-manifest and then **writes the credentials into `.env` on disk**. It needs
+`fs`, so Keystatic ships it only in its Node build. Under the Cloudflare
+adapter the API route runs in workerd and refuses:
 
-1. `npm run dev`, open `/keystatic`, click **Sign in with GitHub**.
-2. Follow the prompts to create the App against `elsewisemgmt/elsewise`.
-3. Keystatic prints four values. Copy `.env.example` to `.env` and fill them in.
-4. Add the App's callback URLs for every origin you use it from —
-   `http://127.0.0.1:4321`, the `workers.dev` URL, and later `elsewisemgmt.com`.
-   A missing callback URL is the cause of `redirect_uri not associated`.
+> The Keystatic API route is running in a non-Node.js environment which does
+> not support GitHub App creation
 
-For production, three are secrets and one is not:
+So run the setup step with the adapter dropped for one session:
+
+```bash
+npm run setup:github-app     # KEYSTATIC_SETUP=1 astro dev
+```
+
+1. Open `http://127.0.0.1:4321/keystatic` and click **Sign in with GitHub**.
+2. When it asks for your deployed project URL, give
+   `https://elsewise.cedric-c3e.workers.dev` (later, the real domain). It goes
+   into the App's callback URLs, so filling it in now saves adding it by hand.
+3. Approve the App and install it on `elsewisemgmt/elsewise`.
+4. Keystatic writes `.env` itself. Check the four values landed.
+5. Stop it and go back to `npm run dev`.
+
+`setup:github-app` is **only** for this step. It is not how the site runs or
+deploys — normal dev keeps the adapter so local behaviour matches production.
+
+### Creating the App by hand instead
+
+Nothing above is magic; the flow just submits a manifest. To do it yourself at
+**Settings → Developer settings → GitHub Apps → New**, match these exactly:
+
+- **Callback URLs** — `http://127.0.0.1:4321/api/keystatic/github/oauth/callback`,
+  and the same path on the `workers.dev` URL and, later, `elsewisemgmt.com`
+- **Request user authorization (OAuth) during installation** — checked
+- **Webhook → Active** — unchecked
+- **Repository permissions** — Contents: *Read and write*; Metadata:
+  *Read-only*; Pull requests: *Read-only*
+
+Then generate a client secret, install the App on the repo, and write `.env`
+yourself. `KEYSTATIC_SECRET` is not from GitHub — it is any random string:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+The App **slug** is the last segment of its public page URL
+(`github.com/apps/<slug>`), which is what `PUBLIC_KEYSTATIC_GITHUB_APP_SLUG`
+wants.
+
+### Production
+
+Three of the four are secrets:
 
 ```bash
 npx wrangler secret put KEYSTATIC_GITHUB_CLIENT_ID
@@ -192,6 +233,9 @@ npx wrangler secret put KEYSTATIC_SECRET
 `PUBLIC_KEYSTATIC_GITHUB_APP_SLUG` is inlined into the admin bundle at build
 time, so it must be set as a **build-time** variable in the Workers Builds
 settings, not as a secret.
+
+A missing callback URL is the cause of `redirect_uri not associated`: add the
+production origin to the App once the domain is live.
 
 ---
 
