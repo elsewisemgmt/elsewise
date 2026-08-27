@@ -69,6 +69,19 @@ const { name, tagline, genres, heroImage, manager } = artist.data;
     grid-area: 1 / 1;
   }
 
+  /* Top scrim for the name. Fades out downward so it never cuts a hard
+     edge across the photograph. Pseudo-elements of a grid container are
+     grid items, but `> *` does not match them, so it is placed explicitly. */
+  .card__media::before {
+    content: '';
+    grid-area: 1 / 1;
+    align-self: start;
+    block-size: 42%;
+    z-index: 1;
+    background: var(--scrim-top);
+    pointer-events: none;
+  }
+
   .card__media :global(picture),
   .card__media :global(img) {
     width: 100%;
@@ -82,9 +95,7 @@ const { name, tagline, genres, heroImage, manager } = artist.data;
     align-self: start;
     justify-self: start;
     z-index: 2;
-    margin: var(--space-sm);
-    padding: 0.3em 0.55em;
-    background: var(--scrim);
+    margin: var(--space-sm) var(--space-md);
     color: var(--on-scrim);
     font-size: var(--text-lg);
     font-weight: 600;
@@ -108,14 +119,14 @@ const { name, tagline, genres, heroImage, manager } = artist.data;
   /* The information box, occupying the lower half of the image. */
   .card__reveal {
     align-self: end;
-    block-size: 50%;
+    block-size: 60%;
     z-index: 2;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
     gap: var(--space-2xs);
-    padding: var(--space-sm);
-    background: var(--scrim-strong);
+    padding: var(--space-md);
+    background: var(--scrim-bottom);
     color: var(--on-scrim);
     /* Let clicks through to the stretched link, except on real links. */
     pointer-events: none;

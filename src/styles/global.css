@@ -44,6 +44,32 @@
   --on-scrim: #f7f5f1;
   --on-scrim-muted: rgb(247 245 241 / 0.78);
 
+  /*
+   * Scrims as gradients rather than hard-edged boxes. Each ramps toward the
+   * edge the text sits against, so the type keeps its contrast while the
+   * opposite edge dissolves into the photograph instead of cutting across it.
+   */
+  --scrim-top: linear-gradient(
+    to bottom,
+    rgb(10 9 8 / 0.78) 0%,
+    rgb(10 9 8 / 0.42) 48%,
+    rgb(10 9 8 / 0) 100%
+  );
+  --scrim-bottom: linear-gradient(
+    to bottom,
+    rgb(10 9 8 / 0) 0%,
+    rgb(10 9 8 / 0.52) 46%,
+    rgb(10 9 8 / 0.93) 100%
+  );
+
+  /*
+   * Ambient background wash. Three cool tones — indigo, violet, teal — chosen
+   * to sit next to the existing accent without competing with press imagery.
+   */
+  --ambient-1: rgb(61 58 140 / 0.16);
+  --ambient-2: rgb(104 62 158 / 0.13);
+  --ambient-3: rgb(30 110 122 / 0.11);
+
   /* Space */
   --space-2xs: 0.25rem;
   --space-xs: 0.5rem;
@@ -71,6 +97,51 @@
     --color-ink-muted: #9b968b;
     --color-rule: #2e2c27;
     --color-accent: #a8a4f0;
+
+    /* Carries more weight against a near-black ground than against paper. */
+    --ambient-1: rgb(96 90 226 / 0.30);
+    --ambient-2: rgb(150 88 214 / 0.24);
+    --ambient-3: rgb(38 140 154 / 0.22);
+  }
+}
+
+/*
+ * Slow-drifting colour wash anchored to the top right, sitting behind every
+ * page. Purely decorative, so it is aria-hidden in the layout and never
+ * intercepts pointer events.
+ */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ambient::before {
+  content: '';
+  position: absolute;
+  inset-block-start: -30vmax;
+  inset-inline-end: -22vmax;
+  inline-size: 88vmax;
+  block-size: 88vmax;
+  background:
+    radial-gradient(38% 38% at 60% 30%, var(--ambient-1) 0%, transparent 72%),
+    radial-gradient(34% 34% at 38% 52%, var(--ambient-2) 0%, transparent 70%),
+    radial-gradient(30% 30% at 58% 68%, var(--ambient-3) 0%, transparent 68%);
+  animation: ambient-drift 54s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes ambient-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(-6vmax, 5vmax, 0) scale(1.14) rotate(9deg);
+  }
+  100% {
+    transform: translate3d(4vmax, -4vmax, 0) scale(1.06) rotate(-7deg);
   }
 }
 
@@ -216,5 +287,10 @@ a {
   [data-reveal-ready] [data-reveal]:not([data-revealed]) {
     opacity: 1;
     transform: none;
+  }
+
+  /* The wash stays — it is colour, not movement — but stops drifting. */
+  .ambient::before {
+    animation: none;
   }
 }
