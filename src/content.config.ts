@@ -2,6 +2,24 @@ import { defineCollection, reference, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
 /**
+ * Keystatic writes `null` or `""` for optional fields the editor left blank,
+ * where zod's `.optional()` expects the key to be absent. These helpers bridge
+ * that gap so a half-filled CMS entry fails on its own merits rather than on a
+ * serialisation detail.
+ */
+const emptyToUndefined = (value: unknown) =>
+  value === null || value === '' ? undefined : value;
+
+const optionalUrl = z.preprocess(emptyToUndefined, z.url().optional());
+const optionalText = z.preprocess(emptyToUndefined, z.string().min(1).optional());
+
+/**
+ * A reference to a heavy file held outside the repo (R2 today).
+ * Either a bare key or a full URL — see src/lib/assets.ts.
+ */
+const optionalAssetRef = optionalText;
+
+/**
  * The single source of truth for an artist's external presence.
  *
  * Nothing else in the codebase may hold an artist URL. Every rendered link
@@ -9,25 +27,19 @@ import { glob } from 'astro/loaders';
  */
 const links = z
   .object({
-    spotify: z.url().optional(),
-    appleMusic: z.url().optional(),
-    bandcamp: z.url().optional(),
-    instagram: z.url().optional(),
-    youtube: z.url().optional(),
-    tiktok: z.url().optional(),
-    website: z.url().optional(),
+    spotify: optionalUrl,
+    appleMusic: optionalUrl,
+    bandcamp: optionalUrl,
+    instagram: optionalUrl,
+    youtube: optionalUrl,
+    tiktok: optionalUrl,
+    website: optionalUrl,
   })
   .default({});
 
 export type ArtistLinks = z.infer<typeof links>;
 
-/**
- * A reference to a heavy file held outside the repo (R2 today).
- * Either a bare key or a full URL — see src/lib/assets.ts.
- */
-const assetRef = z.string().min(1);
-
-/** ~100 words, counted rather than guessed at by character length. */
+/** ~100 words, counted rather than approximated by character length. */
 const shortBio = z
   .string()
   .refine((value) => value.trim().split(/\s+/).filter(Boolean).length <= 100, {
@@ -45,12 +57,11 @@ const artists = defineCollection({
       status: z.enum(['active', 'associate', 'archived']).default('active'),
 
       // Alt text is a required schema field, not an afterthought: an artist
-      // cannot be published with an undescribed hero image.
+      // cannot be published with an undescribed hero image. Photographer
+      // credit is required for the same reason — crediting is contractual.
       heroImage: z.object({
         src: image(),
         alt: z.string().min(1),
-        // Photographer credit is a contractual obligation. Required, and
-        // rendered wherever the shot appears.
         credit: z.string().min(1),
       }),
 
@@ -61,23 +72,24 @@ const artists = defineCollection({
             alt: z.string().min(1),
             credit: z.string().min(1),
             /** Hi-res original for press and print use. */
-            hiRes: assetRef.optional(),
+            hiRes: optionalAssetRef,
           }),
         )
         .default([]),
 
-      logo: z
-        .object({
-          src: image(),
-          alt: z.string().min(1),
-        })
-        .optional(),
+      logo: z.preprocess(
+        (value) =>
+          value && typeof value === 'object' && 'src' in value && value.src
+            ? value
+            : undefined,
+        z.object({ src: image(), alt: z.string().min(1) }).optional(),
+      ),
 
       links,
 
-      techRider: assetRef.optional(),
-      stagePlot: assetRef.optional(),
-      bookingTerritories: z.string().optional(),
+      techRider: optionalAssetRef,
+      stagePlot: optionalAssetRef,
+      bookingTerritories: optionalText,
 
       featured: z.boolean().default(false),
       order: z.number().int().default(0),
@@ -95,11 +107,14 @@ const news = defineCollection({
       coverImage: z.object({
         src: image(),
         alt: z.string().min(1),
-        credit: z.string().optional(),
+        credit: optionalText,
       }),
-      relatedArtists: z.array(reference('artists')).default([]),
+      relatedArtists: z.preprocess(
+        (value) => (Array.isArray(value) ? value.filter(Boolean) : value),
+        z.array(reference('artists')).default([]),
+      ),
       /** Set when the piece itself lives elsewhere, e.g. a press pickup. */
-      externalUrl: z.url().optional(),
+      externalUrl: optionalUrl,
       draft: z.boolean().default(false),
     }),
   // body is the Markdoc body of the file.
@@ -114,9 +129,9 @@ const liveDates = defineCollection({
     venue: z.string(),
     city: z.string(),
     country: z.string(),
-    ticketUrl: z.url().optional(),
+    ticketUrl: optionalUrl,
     soldOut: z.boolean().default(false),
-    festivalName: z.string().optional(),
+    festivalName: optionalText,
   }),
 });
 
