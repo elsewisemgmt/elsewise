@@ -12,9 +12,23 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^7.2.8"
+    "@astrojs/cloudflare": "^14.2.5",
+    "@astrojs/markdoc": "^2.0.8",
+    "@astrojs/react": "^6.0.4",
+    "@fontsource-variable/archivo": "^5.3.0",
+    "@keystatic/astro": "^6.0.0",
+    "@keystatic/core": "^0.6.9",
+    "astro": "^7.2.8",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "sharp": "^0.35.4"
   },
   "allowScripts": {
     "esbuild": true
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "wrangler": "^4.127.0"
   }
 }
