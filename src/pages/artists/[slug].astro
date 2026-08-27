@@ -4,6 +4,7 @@ import { Picture } from 'astro:assets';
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ArtistLinks from '../../components/ArtistLinks.astro';
+import ContactLink from '../../components/ContactLink.astro';
 import { resolveAssetUrl, assetFileName } from '../../lib/assets';
 
 export const getStaticPaths = (async () => {
@@ -23,6 +24,8 @@ const {
   heroImage,
   pressShots,
   links,
+  manager,
+  bookingAgent,
   techRider,
   stagePlot,
   bookingTerritories,
@@ -62,6 +65,32 @@ const documents = [
     </div>
 
     <ArtistLinks links={links} />
+
+    {
+      (manager || bookingAgent) && (
+        <section class="artist__section">
+          <h2 class="label">Representation</h2>
+          <dl class="artist__contacts">
+            {manager && (
+              <div>
+                <dt class="label">Manager</dt>
+                <dd>
+                  <ContactLink contact={manager} />
+                </dd>
+              </div>
+            )}
+            {bookingAgent && (
+              <div>
+                <dt class="label">Booking</dt>
+                <dd>
+                  <ContactLink contact={bookingAgent} />
+                </dd>
+              </div>
+            )}
+          </dl>
+        </section>
+      )
+    }
 
     {
       bookingTerritories && (
@@ -158,6 +187,18 @@ const documents = [
 
   .artist__section {
     margin-block-start: var(--space-xl);
+  }
+
+  .artist__contacts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md) var(--space-xl);
+    margin: var(--space-sm) 0 0;
+  }
+
+  .artist__contacts dd {
+    margin: var(--space-2xs) 0 0;
+    font-size: var(--text-lg);
   }
 
   .artist__docs {

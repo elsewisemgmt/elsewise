@@ -1,0 +1,25 @@
+---
+import type { Contact } from '../content.config';
+
+interface Props {
+  contact: Contact;
+}
+
+const { contact } = Astro.props;
+---
+
+<a class="contact-link" href={`mailto:${contact.email}`}>{contact.name}</a>
+
+<style>
+  .contact-link {
+    color: inherit;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+    text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+    transition: text-decoration-color var(--duration-fast) var(--ease);
+  }
+
+  .contact-link:hover {
+    text-decoration-color: currentColor;
+  }
+</style>

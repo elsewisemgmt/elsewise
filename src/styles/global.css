@@ -34,6 +34,16 @@
   --color-rule: #ddd9d1;
   --color-accent: #3d3a8c;
 
+  /*
+   * Scrims for text sitting on photography. Deliberately not theme-aware: a
+   * press shot is the same image in either scheme, so the overlay stays dark
+   * with light text both ways. Flat translucency, no gradient, no blur.
+   */
+  --scrim: rgb(10 9 8 / 0.66);
+  --scrim-strong: rgb(10 9 8 / 0.88);
+  --on-scrim: #f7f5f1;
+  --on-scrim-muted: rgb(247 245 241 / 0.78);
+
   /* Space */
   --space-2xs: 0.25rem;
   --space-xs: 0.5rem;

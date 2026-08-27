@@ -25,6 +25,23 @@ const altField = fields.text({
 });
 
 /**
+ * A named person reachable by email. The name becomes the visible link text
+ * and the email becomes the mailto target, so both are needed for the link to
+ * render at all — leave the name blank to omit the contact entirely.
+ */
+const contactField = (label: string, description: string) =>
+  fields.object(
+    {
+      name: fields.text({ label: 'Name' }),
+      email: fields.text({
+        label: 'Email',
+        description: 'The name is shown; this is where it links to.',
+      }),
+    },
+    { label, description },
+  );
+
+/**
  * Heavy files (hi-res originals, riders, plots) are not committed to the repo.
  * Store either a bare key resolved against the R2 bucket, or a full URL.
  */
@@ -144,6 +161,12 @@ export default config({
               'The only place an artist URL may live. Every link list on the site reads from here.',
           },
         ),
+
+        manager: contactField(
+          'Manager',
+          'Shown on the roster hover state and on the artist page.',
+        ),
+        bookingAgent: contactField('Booking agent', 'Shown on the artist page.'),
 
         techRider: assetRefField('Tech rider', 'Sent to production managers.'),
         stagePlot: assetRefField('Stage plot', 'Sent to production managers.'),

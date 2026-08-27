@@ -41,6 +41,20 @@ const links = z
 
 export type ArtistLinks = z.infer<typeof links>;
 
+/**
+ * A named person reachable by email, rendered as a mailto link.
+ * Dropped entirely when the editor left the name blank.
+ */
+const contact = z.preprocess(
+  (value) =>
+    value && typeof value === 'object' && 'name' in value && value.name
+      ? value
+      : undefined,
+  z.object({ name: z.string().min(1), email: z.email() }).optional(),
+);
+
+export type Contact = NonNullable<z.infer<typeof contact>>;
+
 /** ~100 words, counted rather than approximated by character length. */
 const shortBio = z
   .string()
@@ -88,6 +102,15 @@ const artists = defineCollection({
       ),
 
       links,
+
+      /**
+       * Representation. Rendered as mailto links, so the email is required
+       * whenever a name is given — a contact with no way to reach them is
+       * worse than no contact at all. Keystatic writes an empty object when
+       * the editor leaves both blank, which the preprocess drops.
+       */
+      manager: contact,
+      bookingAgent: contact,
 
       techRider: optionalAssetRef,
       stagePlot: optionalAssetRef,
