@@ -5,38 +5,57 @@ import ContactLink from './ContactLink.astro';
 
 interface Props {
   artist: CollectionEntry<'artists'>;
-  /** The first few cards are above the fold and should not lazy-load. */
+  /**
+   * 'lead' is the featured plate at the top of the roster: wider, larger, and
+   * showing its metadata without waiting for a hover, because presenting that
+   * artist is the whole point of the slot.
+   */
+  variant?: 'grid' | 'lead';
+  /** Above-the-fold cards should not lazy-load. */
   eager?: boolean;
 }
 
-const { artist, eager = false } = Astro.props;
-const { name, tagline, genres, heroImage, manager } = artist.data;
+const { artist, variant = 'grid', eager = false } = Astro.props;
+const { name, tagline, genres, heroImage, manager, bookingTerritories, status } = artist.data;
+const isLead = variant === 'lead';
+
+const widths = isLead ? [640, 960, 1400, 1900] : [400, 600, 800, 1200];
+const sizes = isLead
+  ? '(min-width: 1200px) 76rem, 94vw'
+  : '(min-width: 1100px) 32vw, (min-width: 700px) 46vw, 92vw';
 ---
 
-<article class="card" data-reveal>
+<article class:list={['card', isLead && 'card--lead']} data-reveal>
   <div class="card__media">
     <Picture
       src={heroImage.src}
       alt={heroImage.alt}
       formats={['avif', 'webp']}
-      widths={[400, 600, 800, 1200]}
-      sizes="(min-width: 1100px) 32vw, (min-width: 700px) 46vw, 92vw"
+      widths={widths}
+      sizes={sizes}
       loading={eager ? 'eager' : 'lazy'}
       fetchpriority={eager ? 'high' : 'auto'}
     />
 
-    <h2 class="card__name">
+    <h3 class="card__name">
       <a class="card__link" href={`/artists/${artist.id}/`}>{name}</a>
-    </h2>
+    </h3>
 
     <div class="card__reveal">
       <p class="card__tagline">{tagline}</p>
       <p class="card__genres">{genres.join(' · ')}</p>
+      {
+        isLead && bookingTerritories && (
+          <p class="card__territories">
+            <span class="card__meta-role">Booking</span> {bookingTerritories}
+          </p>
+        )
+      }
       <div class="card__meta">
         {
           manager && (
             <p class="card__manager">
-              <span class="card__manager-role">Manager</span>{' '}
+              <span class="card__meta-role">Manager</span>{' '}
               <ContactLink contact={manager} />
             </p>
           )
@@ -44,6 +63,8 @@ const { name, tagline, genres, heroImage, manager } = artist.data;
         <p class="card__credit">Photo: {heroImage.credit}</p>
       </div>
     </div>
+
+    {status === 'associate' && <p class="card__status label">Associate</p>}
   </div>
 </article>
 
@@ -64,6 +85,28 @@ const { name, tagline, genres, heroImage, manager } = artist.data;
     aspect-ratio: 4 / 5;
     background: var(--color-surface);
     isolation: isolate;
+  }
+
+  .card--lead .card__media {
+    aspect-ratio: 16 / 10;
+  }
+
+  @media (max-width: 40rem) {
+    .card--lead .card__media {
+      aspect-ratio: 4 / 5;
+    }
+  }
+
+  /*
+   * `aspect-ratio` fixes the container's height but does NOT constrain the
+   * grid row: the row was auto-sizing to the photograph's natural aspect, so
+   * every overlay stretched past the visible box and `overflow: hidden` cut
+   * the manager and credit line off the bottom. minmax(0, 1fr) pins the row
+   * to the container instead.
+   */
+  .card__media {
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .card__media > * {
@@ -91,7 +134,6 @@ const { name, tagline, genres, heroImage, manager } = artist.data;
     transition: transform var(--duration) var(--ease);
   }
 
-  /* Name sits on the image at all times, on its own scrim for legibility. */
   .card__name {
     align-self: start;
     justify-self: start;
@@ -100,7 +142,13 @@ const { name, tagline, genres, heroImage, manager } = artist.data;
     color: var(--on-scrim);
     font-size: var(--text-lg);
     font-weight: 600;
+    font-stretch: var(--width-display);
     letter-spacing: var(--tracking-tight);
+  }
+
+  .card--lead .card__name {
+    margin: var(--space-md) var(--space-lg);
+    font-size: var(--text-2xl);
   }
 
   .card__link {
@@ -117,10 +165,23 @@ const { name, tagline, genres, heroImage, manager } = artist.data;
     z-index: 1;
   }
 
-  /* The information box, occupying the lower half of the image. */
+  .card__status {
+    align-self: start;
+    justify-self: end;
+    z-index: 2;
+    margin: var(--space-sm) var(--space-md);
+    color: var(--on-scrim-muted);
+  }
+
+  /*
+   * The information box. It stretches over the whole image rather than taking
+   * a percentage height: a percentage resolved against an aspect-ratio track
+   * overflowed the media and `overflow: hidden` silently clipped the manager
+   * and credit line off the lead plate. The gradient is transparent across the
+   * top third, so a full-height box still reads as a band at the bottom.
+   */
   .card__reveal {
-    align-self: end;
-    block-size: 60%;
+    align-self: stretch;
     z-index: 2;
     display: flex;
     flex-direction: column;
@@ -131,6 +192,10 @@ const { name, tagline, genres, heroImage, manager } = artist.data;
     color: var(--on-scrim);
     /* Let clicks through to the stretched link, except on real links. */
     pointer-events: none;
+  }
+
+  .card--lead .card__reveal {
+    padding: var(--space-lg);
   }
 
   .card__reveal :global(a) {
@@ -146,12 +211,24 @@ const { name, tagline, genres, heroImage, manager } = artist.data;
     line-height: 1.4;
   }
 
+  .card--lead .card__tagline {
+    max-width: 44ch;
+    font-size: var(--text-lg);
+  }
+
   .card__genres {
     margin: 0;
     font-size: var(--text-xs);
     font-weight: 500;
+    font-stretch: var(--width-label);
     letter-spacing: var(--tracking-label);
     text-transform: uppercase;
+    color: var(--on-scrim-muted);
+  }
+
+  .card__territories {
+    margin: 0;
+    font-size: var(--text-xs);
     color: var(--on-scrim-muted);
   }
 
@@ -162,12 +239,19 @@ const { name, tagline, genres, heroImage, manager } = artist.data;
     align-items: flex-end;
     justify-content: space-between;
     gap: var(--space-2xs) var(--space-sm);
+    margin-block-start: var(--space-2xs);
   }
 
   .card__manager {
     margin: 0;
     font-size: var(--text-xs);
     color: var(--on-scrim-muted);
+  }
+
+  .card__meta-role {
+    font-stretch: var(--width-label);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
   }
 
   .card__credit {
@@ -177,11 +261,6 @@ const { name, tagline, genres, heroImage, manager } = artist.data;
     font-size: var(--text-xs);
     letter-spacing: 0.04em;
     color: var(--on-scrim-muted);
-  }
-
-  .card__manager-role {
-    letter-spacing: var(--tracking-label);
-    text-transform: uppercase;
   }
 
   /*
@@ -204,9 +283,40 @@ const { name, tagline, genres, heroImage, manager } = artist.data;
       transform: none;
     }
 
+    /* The lead plate is the feature: it states itself without being asked. */
+    .card--lead .card__reveal {
+      opacity: 1;
+      transform: none;
+    }
+
     .card:hover .card__media :global(img),
     .card:focus-within .card__media :global(img) {
       transform: scale(1.03);
+    }
+  }
+
+  /*
+   * A slow drift on the lead photograph, driven by the scroll position rather
+   * than by JS. Deliberately small — a couple of percent — so it reads as the
+   * plate settling rather than as a parallax effect. Browsers without
+   * scroll-driven animations simply get a still image.
+   */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .card--lead .card__media :global(img) {
+        animation: lead-drift linear both;
+        animation-timeline: view();
+        animation-range: entry 0% exit 100%;
+      }
+    }
+  }
+
+  @keyframes lead-drift {
+    from {
+      transform: scale(1.06) translateY(-2%);
+    }
+    to {
+      transform: scale(1.06) translateY(2%);
     }
   }
 
@@ -218,6 +328,7 @@ const { name, tagline, genres, heroImage, manager } = artist.data;
 
     .card__media :global(img) {
       transform: none !important;
+      animation: none !important;
     }
   }
 </style>

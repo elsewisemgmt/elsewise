@@ -6,32 +6,101 @@ import ArtistCard from '../components/ArtistCard.astro';
 const artists = (await getCollection('artists'))
   .filter((artist) => artist.data.status !== 'archived')
   .sort((a, b) => a.data.order - b.data.order || a.data.name.localeCompare(b.data.name));
+
+/*
+ * `featured` finally does something. It promotes one artist to the lead plate
+ * at the top of the roster; everyone else fills the grid beneath. If nothing
+ * is marked featured the first artist by order leads, so the page always opens
+ * on a photograph rather than on a paragraph.
+ */
+const lead = artists.find((artist) => artist.data.featured) ?? artists[0];
+const rest = artists.filter((artist) => artist !== lead);
 ---
 
 <BaseLayout
   title="Elsewise"
   description="Elsewise is a future-forward management agency based in Amsterdam."
 >
-  <section class="intro page">
-    <h1>A future-forward management agency in Amsterdam.</h1>
+  <section class="masthead page">
+    <p class="label masthead__eyebrow">Artist management — Amsterdam</p>
+    <h1 class="masthead__title">A future-forward management agency in Amsterdam.</h1>
   </section>
 
-  <section class="roster page" aria-labelledby="roster-heading">
-    <h2 id="roster-heading" class="label">Roster</h2>
-    <div class="roster__grid">
-      {artists.map((artist, index) => <ArtistCard artist={artist} eager={index < 3} />)}
-    </div>
+  <section class="roster" aria-labelledby="roster-heading">
+    <h2 id="roster-heading" class="visually-hidden">Roster</h2>
+
+    {
+      lead && (
+        <div class="page roster__lead">
+          <ArtistCard artist={lead} variant="lead" eager />
+        </div>
+      )
+    }
+
+    {
+      rest.length > 0 && (
+        <div class="page roster__rest">
+          <hr class="rule" data-reveal />
+          <p class="label roster__label">Also on the roster</p>
+          <div class="roster__grid" data-reveal-group>
+            {rest.map((artist, index) => (
+              <ArtistCard artist={artist} eager={index < 2} />
+            ))}
+          </div>
+        </div>
+      )
+    }
   </section>
 </BaseLayout>
 
 <style>
-  .intro {
-    padding-block: var(--space-2xl) var(--space-xl);
+  .masthead {
+    padding-block: var(--space-lg) var(--space-md);
   }
 
-  .intro h1 {
-    font-size: var(--text-3xl);
-    max-width: 18ch;
+  /*
+   * A masthead, not a hero headline. It stays type-led but yields the first
+   * screen to the lead photograph — the page is meant to read as a photo book,
+   * and a photo book opens on a plate rather than on a statement.
+   */
+  .masthead__title {
+    font-size: var(--text-2xl);
+    max-width: 20ch;
+    margin-block-start: var(--space-xs);
+  }
+
+  /*
+   * A short opening sequence on load: the eyebrow, then the line. Runs once,
+   * ends visible, and is pure CSS so it never depends on JS having loaded.
+   */
+  @media (prefers-reduced-motion: no-preference) {
+    .masthead__eyebrow,
+    .masthead__title {
+      animation: masthead-rise 760ms var(--ease) both;
+    }
+
+    .masthead__title {
+      animation-delay: 110ms;
+    }
+  }
+
+  @keyframes masthead-rise {
+    from {
+      opacity: 0;
+      transform: translateY(var(--reveal-shift));
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .roster__rest {
+    margin-block-start: var(--space-2xl);
+  }
+
+  .roster__label {
+    margin-block-start: var(--space-md);
   }
 
   .roster__grid {
@@ -39,7 +108,5 @@ const artists = (await getCollection('artists'))
     grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr));
     gap: var(--space-xl) var(--space-md);
     margin-block-start: var(--space-lg);
-    padding: 0;
-    list-style: none;
   }
 </style>

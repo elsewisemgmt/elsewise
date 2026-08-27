@@ -124,9 +124,9 @@ const documents = [
           <h2 id="press-shots" class="label">
             Press shots
           </h2>
-          <div class="artist__shots">
+          <div class="artist__shots" data-reveal-group>
             {pressShots.map((shot) => (
-              <figure>
+              <figure data-reveal>
                 <Picture
                   src={shot.src}
                   alt={shot.alt}

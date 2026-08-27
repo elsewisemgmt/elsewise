@@ -19,7 +19,7 @@ const dateFormat = new Intl.DateTimeFormat('en-GB', {
   <section class="news page">
     <h1>News</h1>
 
-    <ul class="news__list">
+    <ul class="news__list" data-reveal-group>
       {
         posts.map((post) => (
           <li class="news__item" data-reveal>
