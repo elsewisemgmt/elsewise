@@ -26,4 +26,9 @@ export default defineConfig({
   }),
 
   integrations: [react(), markdoc(), keystatic()],
+
+  // The Cloudflare adapter otherwise auto-provisions a KV namespace to back
+  // Astro sessions. Nothing here uses them — the only on-demand routes are
+  // Keystatic's, which carry their own auth — so the binding is pure overhead.
+  session: false,
 });
