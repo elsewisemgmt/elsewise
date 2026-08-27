@@ -1,0 +1,44 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="About"
+  description="Elsewise is a future-forward management agency based in Amsterdam."
+>
+  <section class="about page">
+    <h1>About</h1>
+    <div class="about__body stack">
+      <p class="about__lead">
+        Elsewise is a future-forward management agency based in Amsterdam.
+      </p>
+      <p>
+        Placeholder copy. Replace this with the real description of what the
+        agency does, who it works with and how it works — written for
+        promoters, press, festivals and sync supervisors rather than for fans.
+      </p>
+      <p>
+        Contact routing, the team section and the agency's own press materials
+        are not built yet.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .about {
+    padding-block: var(--space-xl);
+  }
+
+  .about h1 {
+    font-size: var(--text-2xl);
+  }
+
+  .about__body {
+    margin-block-start: var(--space-lg);
+  }
+
+  .about__lead {
+    font-size: var(--text-lg);
+  }
+</style>

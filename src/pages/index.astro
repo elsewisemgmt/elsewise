@@ -1,17 +1,45 @@
 ---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ArtistCard from '../components/ArtistCard.astro';
 
+const artists = (await getCollection('artists'))
+  .filter((artist) => artist.data.status !== 'archived')
+  .sort((a, b) => a.data.order - b.data.order || a.data.name.localeCompare(b.data.name));
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<BaseLayout
+  title="Elsewise"
+  description="Elsewise is a future-forward management agency based in Amsterdam."
+>
+  <section class="intro page">
+    <h1>A future-forward management agency in Amsterdam.</h1>
+  </section>
+
+  <section class="roster page" aria-labelledby="roster-heading">
+    <h2 id="roster-heading" class="label">Roster</h2>
+    <div class="roster__grid">
+      {artists.map((artist, index) => <ArtistCard artist={artist} eager={index < 3} />)}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .intro {
+    padding-block: var(--space-2xl) var(--space-xl);
+  }
+
+  .intro h1 {
+    font-size: var(--text-3xl);
+    max-width: 18ch;
+  }
+
+  .roster__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr));
+    gap: var(--space-xl) var(--space-md);
+    margin-block-start: var(--space-lg);
+    padding: 0;
+    list-style: none;
+  }
+</style>

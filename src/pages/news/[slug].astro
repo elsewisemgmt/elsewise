@@ -1,0 +1,123 @@
+---
+import { getCollection, getEntry, render } from 'astro:content';
+import { Picture } from 'astro:assets';
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export const getStaticPaths = (async () => {
+  const posts = await getCollection('news');
+  return posts
+    .filter((post) => import.meta.env.DEV || !post.data.draft)
+    .map((post) => ({ params: { slug: post.id }, props: { post } }));
+}) satisfies GetStaticPaths;
+
+const { post } = Astro.props;
+const { title, date, excerpt, coverImage, relatedArtists, externalUrl } = post.data;
+const { Content } = await render(post);
+
+// References are resolved at build time, so a bad artist slug fails the build
+// rather than rendering a dead link.
+const artists = await Promise.all(relatedArtists.map((ref) => getEntry(ref)));
+
+const dateFormat = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+---
+
+<BaseLayout title={title} description={excerpt}>
+  <article class="post page">
+    <header>
+      <p class="label">
+        <time datetime={date.toISOString()}>{dateFormat.format(date)}</time>
+      </p>
+      <h1>{title}</h1>
+      <p class="post__excerpt">{excerpt}</p>
+    </header>
+
+    <figure class="post__cover">
+      <Picture
+        src={coverImage.src}
+        alt={coverImage.alt}
+        formats={['avif', 'webp']}
+        widths={[600, 900, 1400, 1800]}
+        sizes="(min-width: 1100px) 70vw, 94vw"
+        loading="eager"
+        fetchpriority="high"
+      />
+      {coverImage.credit && <figcaption class="credit">Photo: {coverImage.credit}</figcaption>}
+    </figure>
+
+    <div class="post__body stack">
+      <Content />
+    </div>
+
+    {
+      externalUrl && (
+        <p class="post__external">
+          <a href={externalUrl} rel="noopener">
+            Read the full piece
+          </a>
+        </p>
+      )
+    }
+
+    {
+      artists.length > 0 && (
+        <footer class="post__related">
+          <h2 class="label">Related artists</h2>
+          <ul>
+            {artists.map((artist) => (
+              <li>
+                <a href={`/artists/${artist.id}/`}>{artist.data.name}</a>
+              </li>
+            ))}
+          </ul>
+        </footer>
+      )
+    }
+  </article>
+</BaseLayout>
+
+<style>
+  .post {
+    padding-block: var(--space-xl);
+  }
+
+  .post h1 {
+    font-size: var(--text-2xl);
+    margin-block-start: var(--space-xs);
+    max-width: 22ch;
+  }
+
+  .post__excerpt {
+    font-size: var(--text-lg);
+    color: var(--color-ink-muted);
+    margin-block-start: var(--space-sm);
+  }
+
+  .post__cover {
+    margin: var(--space-xl) 0;
+  }
+
+  .post__cover :global(img) {
+    width: 100%;
+    height: auto;
+  }
+
+  .post__related {
+    margin-block-start: var(--space-xl);
+    padding-block-start: var(--space-md);
+    border-block-start: 1px solid var(--color-rule);
+  }
+
+  .post__related ul {
+    margin: var(--space-xs) 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+  }
+</style>

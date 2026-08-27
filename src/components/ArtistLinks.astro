@@ -1,0 +1,76 @@
+---
+import type { ArtistLinks } from '../content.config';
+
+interface Props {
+  links: ArtistLinks;
+  label?: string;
+}
+
+const { links, label = 'Listen and follow' } = Astro.props;
+
+/*
+ * The one place link labels and ordering are defined. Every rendered link list
+ * on the site goes through this component and reads from the artist's `links`
+ * object, so a wrong handle is fixed in the CMS in exactly one place.
+ */
+const LINK_LABELS = [
+  ['spotify', 'Spotify'],
+  ['appleMusic', 'Apple Music'],
+  ['bandcamp', 'Bandcamp'],
+  ['instagram', 'Instagram'],
+  ['youtube', 'YouTube'],
+  ['tiktok', 'TikTok'],
+  ['website', 'Website'],
+] as const satisfies ReadonlyArray<readonly [keyof ArtistLinks, string]>;
+
+const entries = LINK_LABELS.flatMap(([key, text]) => {
+  const href = links[key];
+  return href ? [{ key, text, href }] : [];
+});
+---
+
+{
+  entries.length > 0 && (
+    <nav class="artist-links" aria-label={label}>
+      <ul>
+        {entries.map(({ key, text, href }) => (
+          <li>
+            <a href={href} rel="me noopener" data-platform={key}>
+              {text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+<style>
+  .artist-links ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm) var(--space-md);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .artist-links a {
+    font-size: var(--text-xs);
+    font-weight: 500;
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--color-ink-muted);
+    padding-block-end: 2px;
+    border-block-end: 1px solid transparent;
+    transition:
+      color var(--duration-fast) var(--ease),
+      border-color var(--duration-fast) var(--ease);
+  }
+
+  .artist-links a:hover {
+    color: var(--color-ink);
+    border-block-end-color: var(--color-ink);
+  }
+</style>

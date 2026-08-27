@@ -1,0 +1,120 @@
+---
+import { Picture } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  artist: CollectionEntry<'artists'>;
+  /** The first few cards are above the fold and should not lazy-load. */
+  eager?: boolean;
+}
+
+const { artist, eager = false } = Astro.props;
+const { name, tagline, genres, heroImage } = artist.data;
+---
+
+<article class="card" data-reveal>
+  <a href={`/artists/${artist.id}/`}>
+    <div class="card__media">
+      <Picture
+        src={heroImage.src}
+        alt={heroImage.alt}
+        formats={['avif', 'webp']}
+        widths={[400, 600, 800, 1200]}
+        sizes="(min-width: 1100px) 32vw, (min-width: 700px) 46vw, 92vw"
+        loading={eager ? 'eager' : 'lazy'}
+        fetchpriority={eager ? 'high' : 'auto'}
+      />
+    </div>
+
+    <div class="card__body">
+      <h2 class="card__name">{name}</h2>
+      <p class="card__tagline">{tagline}</p>
+      <p class="label">{genres.join(' · ')}</p>
+    </div>
+  </a>
+
+  <p class="credit">Photo: {heroImage.credit}</p>
+</article>
+
+<style>
+  .card {
+    margin: 0;
+  }
+
+  .card > a {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .card__media {
+    overflow: hidden;
+    background: var(--color-surface);
+    aspect-ratio: 4 / 5;
+  }
+
+  .card__media :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--duration) var(--ease);
+  }
+
+  .card__body {
+    padding-block-start: var(--space-sm);
+  }
+
+  .card__name {
+    font-size: var(--text-lg);
+    font-weight: 600;
+  }
+
+  .card__tagline {
+    margin: var(--space-2xs) 0 var(--space-xs);
+    max-width: 40ch;
+    color: var(--color-ink-muted);
+    font-size: var(--text-sm);
+  }
+
+  /*
+   * Hover is an enhancement, never the only way to reach the information.
+   * On touch, and for anyone without a fine pointer, name, tagline and genres
+   * are simply visible. Where hover exists, the tagline and genres fade up and
+   * the image scales very slightly.
+   */
+  @media (hover: hover) and (pointer: fine) {
+    .card__tagline,
+    .card__body .label {
+      opacity: 0;
+      transform: translateY(0.35rem);
+      transition:
+        opacity var(--duration) var(--ease),
+        transform var(--duration) var(--ease);
+    }
+
+    .card:hover .card__tagline,
+    .card:hover .card__body .label,
+    .card:focus-within .card__tagline,
+    .card:focus-within .card__body .label {
+      opacity: 1;
+      transform: none;
+    }
+
+    .card:hover .card__media :global(img),
+    .card:focus-within .card__media :global(img) {
+      transform: scale(1.03);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card__tagline,
+    .card__body .label {
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
+    .card__media :global(img) {
+      transform: none !important;
+    }
+  }
+</style>

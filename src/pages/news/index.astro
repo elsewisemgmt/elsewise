@@ -1,0 +1,94 @@
+---
+import { getCollection } from 'astro:content';
+import { Picture } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+// Drafts are visible in dev and never published.
+const posts = (await getCollection('news'))
+  .filter((post) => import.meta.env.DEV || !post.data.draft)
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const dateFormat = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+---
+
+<BaseLayout title="News" description="News and press from the Elsewise roster.">
+  <section class="news page">
+    <h1>News</h1>
+
+    <ul class="news__list">
+      {
+        posts.map((post) => (
+          <li class="news__item" data-reveal>
+            <a href={post.data.externalUrl ?? `/news/${post.id}/`}>
+              <Picture
+                src={post.data.coverImage.src}
+                alt={post.data.coverImage.alt}
+                formats={['avif', 'webp']}
+                widths={[400, 700, 1000]}
+                sizes="(min-width: 800px) 30vw, 90vw"
+                loading="lazy"
+              />
+              <p class="label">
+                <time datetime={post.data.date.toISOString()}>
+                  {dateFormat.format(post.data.date)}
+                </time>
+                {post.data.draft && ' · Draft'}
+                {post.data.externalUrl && ' · External'}
+              </p>
+              <h2>{post.data.title}</h2>
+              <p class="news__excerpt">{post.data.excerpt}</p>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</BaseLayout>
+
+<style>
+  .news {
+    padding-block: var(--space-xl);
+  }
+
+  .news h1 {
+    font-size: var(--text-2xl);
+  }
+
+  .news__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr));
+    gap: var(--space-xl) var(--space-md);
+    margin-block-start: var(--space-lg);
+    padding: 0;
+    list-style: none;
+  }
+
+  .news__item a {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .news__item h2 {
+    font-size: var(--text-lg);
+    margin-block-start: var(--space-2xs);
+  }
+
+  .news__item :global(img) {
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    width: 100%;
+    margin-block-end: var(--space-sm);
+    background: var(--color-surface);
+  }
+
+  .news__excerpt {
+    color: var(--color-ink-muted);
+    font-size: var(--text-sm);
+    margin-block-start: var(--space-xs);
+  }
+</style>

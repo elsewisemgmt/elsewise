@@ -1,0 +1,99 @@
+---
+import '@fontsource-variable/archivo/wght.css';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description } = Astro.props;
+const siteName = 'Elsewise';
+const fullTitle = title === siteName ? siteName : `${title} — ${siteName}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    {description && <meta name="description" content={description} />}
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header page">
+      <a class="wordmark" href="/">Elsewise</a>
+      <nav aria-label="Primary">
+        <ul>
+          <li><a href="/">Roster</a></li>
+          <li><a href="/news/">News</a></li>
+          <li><a href="/about/">About</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="site-footer page">
+      <p class="label">Elsewise — Management, Amsterdam</p>
+    </footer>
+
+    <script>
+      import '../scripts/reveal';
+    </script>
+
+    <style>
+      .site-header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-md);
+        align-items: baseline;
+        justify-content: space-between;
+        padding-block: var(--space-md);
+      }
+
+      .wordmark {
+        font-size: var(--text-sm);
+        font-weight: 600;
+        letter-spacing: var(--tracking-label);
+        text-transform: uppercase;
+        text-decoration: none;
+      }
+
+      nav ul {
+        display: flex;
+        gap: var(--space-md);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      nav a {
+        font-size: var(--text-xs);
+        font-weight: 500;
+        letter-spacing: var(--tracking-label);
+        text-transform: uppercase;
+        text-decoration: none;
+        color: var(--color-ink-muted);
+        transition: color var(--duration-fast) var(--ease);
+      }
+
+      nav a:hover {
+        color: var(--color-ink);
+      }
+
+      .site-footer {
+        margin-block-start: var(--space-2xl);
+        padding-block: var(--space-lg);
+        border-block-start: 1px solid var(--color-rule);
+      }
+    </style>
+  </body>
+</html>

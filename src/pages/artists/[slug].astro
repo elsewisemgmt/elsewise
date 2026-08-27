@@ -1,0 +1,182 @@
+---
+import { getCollection, render } from 'astro:content';
+import { Picture } from 'astro:assets';
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ArtistLinks from '../../components/ArtistLinks.astro';
+import { resolveAssetUrl, assetFileName } from '../../lib/assets';
+
+export const getStaticPaths = (async () => {
+  const artists = await getCollection('artists');
+  return artists.map((artist) => ({
+    params: { slug: artist.id },
+    props: { artist },
+  }));
+}) satisfies GetStaticPaths;
+
+const { artist } = Astro.props;
+const {
+  name,
+  tagline,
+  shortBio,
+  genres,
+  heroImage,
+  pressShots,
+  links,
+  techRider,
+  stagePlot,
+  bookingTerritories,
+} = artist.data;
+const { Content } = await render(artist);
+
+const documents = [
+  techRider ? { label: 'Tech rider', ref: techRider } : null,
+  stagePlot ? { label: 'Stage plot', ref: stagePlot } : null,
+].filter((doc) => doc !== null);
+---
+
+<BaseLayout title={name} description={tagline}>
+  <article class="artist page">
+    <header class="artist__header">
+      <p class="label">{genres.join(' · ')}</p>
+      <h1>{name}</h1>
+      <p class="artist__tagline">{tagline}</p>
+    </header>
+
+    <figure class="artist__hero">
+      <Picture
+        src={heroImage.src}
+        alt={heroImage.alt}
+        formats={['avif', 'webp']}
+        widths={[600, 900, 1400, 1800]}
+        sizes="(min-width: 1100px) 70vw, 94vw"
+        loading="eager"
+        fetchpriority="high"
+      />
+      <figcaption class="credit">Photo: {heroImage.credit}</figcaption>
+    </figure>
+
+    <div class="artist__body stack">
+      <p class="artist__short-bio">{shortBio}</p>
+      <Content />
+    </div>
+
+    <ArtistLinks links={links} />
+
+    {
+      bookingTerritories && (
+        <section class="artist__section">
+          <h2 class="label">Booking territories</h2>
+          <p>{bookingTerritories}</p>
+        </section>
+      )
+    }
+
+    {
+      documents.length > 0 && (
+        <section class="artist__section">
+          <h2 class="label">Production documents</h2>
+          <ul class="artist__docs">
+            {documents.map((doc) => (
+              <li>
+                <a href={resolveAssetUrl(doc.ref)} download={assetFileName(doc.ref)}>
+                  {doc.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    {
+      pressShots.length > 0 && (
+        <section class="artist__section" aria-labelledby="press-shots">
+          <h2 id="press-shots" class="label">
+            Press shots
+          </h2>
+          <div class="artist__shots">
+            {pressShots.map((shot) => (
+              <figure>
+                <Picture
+                  src={shot.src}
+                  alt={shot.alt}
+                  formats={['avif', 'webp']}
+                  widths={[400, 700, 1000]}
+                  sizes="(min-width: 900px) 30vw, 90vw"
+                  loading="lazy"
+                />
+                <figcaption class="credit">
+                  Photo: {shot.credit}
+                  {shot.hiRes && (
+                    <>
+                      {' — '}
+                      <a href={resolveAssetUrl(shot.hiRes)} download={assetFileName(shot.hiRes)}>
+                        hi-res
+                      </a>
+                    </>
+                  )}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      )
+    }
+  </article>
+</BaseLayout>
+
+<style>
+  .artist {
+    padding-block: var(--space-xl);
+  }
+
+  .artist__header h1 {
+    font-size: var(--text-3xl);
+    margin-block-start: var(--space-xs);
+  }
+
+  .artist__tagline {
+    font-size: var(--text-lg);
+    color: var(--color-ink-muted);
+    margin-block-start: var(--space-sm);
+    max-width: 46ch;
+  }
+
+  .artist__hero {
+    margin: var(--space-xl) 0;
+  }
+
+  .artist__hero :global(img) {
+    width: 100%;
+    height: auto;
+  }
+
+  .artist__short-bio {
+    font-size: var(--text-lg);
+  }
+
+  .artist__section {
+    margin-block-start: var(--space-xl);
+  }
+
+  .artist__docs {
+    margin: var(--space-xs) 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+  }
+
+  .artist__shots {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr));
+    gap: var(--space-lg) var(--space-md);
+    margin-block-start: var(--space-md);
+  }
+
+  .artist__shots figure {
+    margin: 0;
+  }
+</style>
