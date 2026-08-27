@@ -1,0 +1,199 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import ArtistCard from './ArtistCard.astro';
+
+interface Props {
+  artists: CollectionEntry<'artists'>[];
+  /** Milliseconds each artist holds before advancing. */
+  interval?: number;
+}
+
+const { artists, interval = 7000 } = Astro.props;
+const isCarousel = artists.length > 1;
+---
+
+<div
+  class="featured"
+  data-featured-carousel
+  data-interval={interval}
+  data-reveal
+  style={`--slide-duration: ${interval}ms`}
+  role={isCarousel ? 'group' : undefined}
+  aria-roledescription={isCarousel ? 'carousel' : undefined}
+  aria-label={isCarousel ? 'Featured artists' : undefined}
+>
+  <div class="featured__viewport">
+    {
+      artists.map((artist, index) => (
+        <div
+          class="featured__slide"
+          data-slide
+          data-active={index === 0 ? '' : undefined}
+          inert={isCarousel && index !== 0}
+          role={isCarousel ? 'group' : undefined}
+          aria-roledescription={isCarousel ? 'slide' : undefined}
+          aria-label={isCarousel ? `${index + 1} of ${artists.length}` : undefined}
+        >
+          <ArtistCard artist={artist} variant="lead" eager={index === 0} reveal={false} />
+        </div>
+      ))
+    }
+  </div>
+
+  {
+    isCarousel && (
+      <div class="featured__controls">
+        <div class="featured__dots" role="tablist" aria-label="Choose a featured artist">
+          {artists.map((artist, index) => (
+            <button
+              type="button"
+              class="featured__dot"
+              data-dot
+              role="tab"
+              aria-selected={index === 0 ? 'true' : 'false'}
+              aria-label={artist.data.name}
+            >
+              <span class="featured__dot-fill" />
+            </button>
+          ))}
+        </div>
+
+        <button type="button" class="featured__toggle label" data-toggle aria-pressed="false">
+          Pause
+        </button>
+      </div>
+    )
+  }
+</div>
+
+<style>
+  .featured {
+    position: relative;
+  }
+
+  /* Slides stack in one cell and cross-fade. */
+  .featured__viewport {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /*
+   * A fade-through rather than a cross-fade. Both slides carry an artist name
+   * in the same corner, so overlapping them mid-transition renders one name on
+   * top of the other and reads as a glitch. The outgoing slide clears first,
+   * and the incoming one waits for it.
+   */
+  .featured__slide {
+    grid-area: 1 / 1;
+    opacity: 0;
+    transform: scale(1.015);
+    transition:
+      opacity 340ms var(--ease),
+      transform 700ms var(--ease);
+    pointer-events: none;
+  }
+
+  .featured__slide[data-active] {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    transition:
+      opacity 480ms var(--ease) 300ms,
+      transform 900ms var(--ease) 300ms;
+  }
+
+  /*
+   * Controls only exist where the script runs. Without JS the first slide is
+   * simply shown, so dead buttons never ship.
+   */
+  .featured__controls {
+    display: none;
+  }
+
+  .featured[data-enhanced] .featured__controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    margin-block-start: var(--space-sm);
+  }
+
+  .featured__dots {
+    display: flex;
+    gap: var(--space-xs);
+  }
+
+  /*
+   * Each control is a hairline in the same language as the section rules, and
+   * doubles as the progress bar for the slide it belongs to.
+   */
+  .featured__dot {
+    appearance: none;
+    border: 0;
+    padding: var(--space-xs) 0;
+    background: none;
+    cursor: pointer;
+    inline-size: clamp(2rem, 6vw, 3.5rem);
+  }
+
+  .featured__dot-fill {
+    display: block;
+    block-size: 2px;
+    background: var(--color-rule);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .featured__dot-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--color-ink);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 240ms var(--ease);
+  }
+
+  .featured__dot[aria-selected='true'] .featured__dot-fill::after {
+    transform: scaleX(1);
+  }
+
+  /* While playing, the active hairline fills across the slide's duration. */
+  .featured[data-playing] .featured__dot[aria-selected='true'] .featured__dot-fill::after {
+    animation: dot-progress var(--slide-duration, 7000ms) linear forwards;
+  }
+
+  @keyframes dot-progress {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  .featured__toggle {
+    appearance: none;
+    border: 0;
+    background: none;
+    padding: var(--space-xs) 0;
+    color: var(--color-ink-muted);
+    cursor: pointer;
+    transition: color var(--duration-fast) var(--ease);
+  }
+
+  .featured__toggle:hover {
+    color: var(--color-ink);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .featured__slide {
+      transform: none;
+    }
+
+    .featured[data-playing] .featured__dot[aria-selected='true'] .featured__dot-fill::after {
+      animation: none;
+    }
+  }
+</style>

@@ -307,7 +307,16 @@ a {
   transition:
     opacity 520ms var(--ease),
     transform 520ms var(--ease);
-  /* Set by reveal.ts from the element's index within its group. */
+  /*
+   * Reveals are reversible, so the delay is split by direction. A transition
+   * takes its delay from the state being transitioned *to*: leaving carries
+   * no delay, so elements clear out immediately on the way back up, while
+   * arriving keeps the stagger set by reveal.ts.
+   */
+  transition-delay: 0s;
+}
+
+[data-reveal][data-revealed] {
   transition-delay: calc(var(--reveal-i, 0) * var(--stagger-step));
 }
 

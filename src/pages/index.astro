@@ -2,19 +2,22 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ArtistCard from '../components/ArtistCard.astro';
+import FeaturedCarousel from '../components/FeaturedCarousel.astro';
 
 const artists = (await getCollection('artists'))
   .filter((artist) => artist.data.status !== 'archived')
   .sort((a, b) => a.data.order - b.data.order || a.data.name.localeCompare(b.data.name));
 
 /*
- * `featured` finally does something. It promotes one artist to the lead plate
- * at the top of the roster; everyone else fills the grid beneath. If nothing
- * is marked featured the first artist by order leads, so the page always opens
- * on a photograph rather than on a paragraph.
+ * `featured` drives the plate at the top of the roster. Every featured artist
+ * gets a turn there, cycling automatically; the rest fill the grid beneath.
+ * If nothing is marked featured the first artist by order leads alone, so the
+ * page always opens on a photograph rather than on a paragraph.
  */
-const lead = artists.find((artist) => artist.data.featured) ?? artists[0];
-const rest = artists.filter((artist) => artist !== lead);
+const featured = artists.filter((artist) => artist.data.featured);
+const lead = featured.length > 0 ? featured : artists.slice(0, 1);
+const leadIds = new Set(lead.map((artist) => artist.id));
+const rest = artists.filter((artist) => !leadIds.has(artist.id));
 ---
 
 <BaseLayout
@@ -30,9 +33,9 @@ const rest = artists.filter((artist) => artist !== lead);
     <h2 id="roster-heading" class="visually-hidden">Roster</h2>
 
     {
-      lead && (
+      lead.length > 0 && (
         <div class="page roster__lead">
-          <ArtistCard artist={lead} variant="lead" eager />
+          <FeaturedCarousel artists={lead} />
         </div>
       )
     }
